@@ -359,7 +359,7 @@ PCA9685::i2cpwm()
 	_running = true;
 	work_queue(LPWORK, &_work, (worker_t)&PCA9685::i2cpwm_trampoline, this, _i2cpwm_interval);
 }
-*/
+
 int
 PCA9685::setPWM(uint8_t num, uint16_t on, uint16_t off)
 {
