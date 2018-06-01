@@ -71,6 +71,7 @@
 
 #include <uORB/uORB.h>
 #include <uORB/topics/actuator_controls.h>
+#include <uORB/topics/actuator_outputs.h>
 
 #include <board_config.h>
 #include <drivers/drv_io_expander.h>
@@ -312,7 +313,7 @@ PCA9685::i2cpwm()
 	} else {
 		if (!_mode_on_initialized) {
 			/* Subscribe to actuator control 2 (payload group for gimbal) */
-			_actuator_controls_sub = orb_subscribe(ORB_ID(actuator_controls_1)); /*actuator_controls_1 was "_2"*/
+			_actuator_controls_sub = orb_subscribe(ORB_ID(actuator_outputs)); /*actuator_controls_1 was "_2"*/
 			/* set the uorb update interval lower than the driver pwm interval */
 			orb_set_interval(_actuator_controls_sub, 1000.0f / PCA9685_PWMFREQ - 5);
 
@@ -324,7 +325,7 @@ PCA9685::i2cpwm()
 		orb_check(_actuator_controls_sub, &updated);
 
 		if (updated) {
-			orb_copy(ORB_ID(actuator_controls_1), _actuator_controls_sub, &_actuator_controls); /*actuator_controls_1 was "_2"*/
+			orb_copy(ORB_ID(actuator_outputs), _actuator_controls_sub, &_actuator_controls); /*actuator_controls_1 was "_2"*/
 
 			for (int i = 0; i < actuator_controls_s::NUM_ACTUATOR_CONTROLS; i++) {
 				/* Scale the controls to PWM, first multiply by pi to get rad,
@@ -358,7 +359,7 @@ PCA9685::i2cpwm()
 	_running = true;
 	work_queue(LPWORK, &_work, (worker_t)&PCA9685::i2cpwm_trampoline, this, _i2cpwm_interval);
 }
-
+*/
 int
 PCA9685::setPWM(uint8_t num, uint16_t on, uint16_t off)
 {
