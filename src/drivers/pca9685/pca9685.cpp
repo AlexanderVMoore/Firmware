@@ -137,7 +137,7 @@ private:
 
 	int			_actuator_outputs_sub;
 	struct actuator_outputs_s  _actuator_outputs;
-	uint16_t	    	_current_values[actuator_outputs_s::NUM_ACTUATOR_CONTROLS]; /**< stores the current pwm output
+	uint16_t	    	_current_values[actuator_outputs_s::NUM_ACTUATOR_OUTPUTS]; /**< stores the current pwm output
 										  values as sent to the setPin() */
 
 	bool _mode_on_initialized;  /** Set to true after the first call of i2cpwm in mode IOX_MODE_ON */
@@ -191,8 +191,8 @@ PCA9685::PCA9685(int bus, uint8_t address) :
 	_i2cpwm_interval(SEC2TICK(1.0f / 60.0f)),
 	_should_run(false),
 	_comms_errors(perf_alloc(PC_COUNT, "pca9685_com_err")),
-	_actuator_controls_sub(-1),
-	_actuator_controls(),
+	_actuator_outputs_sub(-1),
+	_actuator_outputs(),
 	_mode_on_initialized(false)
 {
 	memset(&_work, 0, sizeof(_work));
@@ -325,15 +325,15 @@ PCA9685::i2cpwm()
 		orb_check(_actuator_outputs_sub, &updated);
 
 		if (updated) {
-			orb_copy(ORB_ID(actuator_outputs_0), _actuator_outputs_sub, &_actuator_outputs);
+			orb_copy(ORB_ID(actuator_outputs), _actuator_outputs_sub, &_actuator_outputs);
 
-			for (int i = 0; i < actuator_outputs_s::NUM_ACTUATOR_CONTROLS; i++) {
+			for (int i = 0; i < actuator_outputs_s::NUM_ACTUATOR_OUTPUTS; i++) {
 				/* Scale the controls to PWM, first multiply by pi to get rad,
 				 * the control[i] values are on the range -1 ... 1 */
 				uint16_t new_value = PCA9685_PWMCENTER +
-						     (_actuator_outputs.control[i] * M_PI_F * PCA9685_SCALE);
+						     (_actuator_outputs.output[i] * M_PI_F * PCA9685_SCALE);
 				DEVICE_DEBUG("%d: current: %u, new %u, control %.2f", i, _current_values[i], new_value,
-					     (double)_actuator_outputs.control[i]);
+					     (double)_actuator_outputs.output[i]);
 
 				if (new_value != _current_values[i] &&
 				    isfinite(new_value) &&
