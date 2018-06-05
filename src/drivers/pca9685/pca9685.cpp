@@ -313,7 +313,7 @@ PCA9685::i2cpwm()
 	} else {
 		if (!_mode_on_initialized) {
 			/* Subscribe to actuator control 2 (payload group for gimbal) */
-			_actuator_outputs_sub = orb_subscribe(ORB_ID(actuator_outputs_0));
+			_actuator_outputs_sub = orb_subscribe(ORB_ID(actuator_outputs));
 			/* set the uorb update interval lower than the driver pwm interval */
 			orb_set_interval(_actuator_outputs_sub, 1000.0f / PCA9685_PWMFREQ - 5);
 
