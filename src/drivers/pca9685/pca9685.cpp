@@ -71,6 +71,7 @@
 
 #include <uORB/uORB.h>
 #include <uORB/topics/actuator_controls.h>
+#include <uORB/topics/actuator_outputs.h>
 
 #include <board_config.h>
 #include <drivers/drv_io_expander.h>
@@ -134,9 +135,9 @@ private:
 
 	uint8_t			_msg[6];
 
-	int			_actuator_controls_sub;
-	struct actuator_controls_s  _actuator_controls;
-	uint16_t	    	_current_values[actuator_controls_s::NUM_ACTUATOR_CONTROLS]; /**< stores the current pwm output
+	int			_actuator_outputs_sub;
+	struct actuator_outputs_s  _actuator_outputs;
+	uint16_t	    	_current_values[actuator_outputs_s::NUM_ACTUATOR_CONTROLS]; /**< stores the current pwm output
 										  values as sent to the setPin() */
 
 	bool _mode_on_initialized;  /** Set to true after the first call of i2cpwm in mode IOX_MODE_ON */
@@ -312,27 +313,27 @@ PCA9685::i2cpwm()
 	} else {
 		if (!_mode_on_initialized) {
 			/* Subscribe to actuator control 2 (payload group for gimbal) */
-			_actuator_controls_sub = orb_subscribe(ORB_ID(actuator_controls_0));
+			_actuator_outputs_sub = orb_subscribe(ORB_ID(actuator_outputs_0));
 			/* set the uorb update interval lower than the driver pwm interval */
-			orb_set_interval(_actuator_controls_sub, 1000.0f / PCA9685_PWMFREQ - 5);
+			orb_set_interval(_actuator_outputs_sub, 1000.0f / PCA9685_PWMFREQ - 5);
 
 			_mode_on_initialized = true;
 		}
 
 		/* Read the servo setpoints from the actuator control topics (gimbal) */
 		bool updated;
-		orb_check(_actuator_controls_sub, &updated);
+		orb_check(_actuator_outputs_sub, &updated);
 
 		if (updated) {
-			orb_copy(ORB_ID(actuator_controls_0), _actuator_controls_sub, &_actuator_controls);
+			orb_copy(ORB_ID(actuator_outputs_0), _actuator_outputs_sub, &_actuator_outputs);
 
-			for (int i = 0; i < actuator_controls_s::NUM_ACTUATOR_CONTROLS; i++) {
+			for (int i = 0; i < actuator_outputs_s::NUM_ACTUATOR_CONTROLS; i++) {
 				/* Scale the controls to PWM, first multiply by pi to get rad,
 				 * the control[i] values are on the range -1 ... 1 */
 				uint16_t new_value = PCA9685_PWMCENTER +
-						     (_actuator_controls.control[i] * M_PI_F * PCA9685_SCALE);
+						     (_actuator_outputs.control[i] * M_PI_F * PCA9685_SCALE);
 				DEVICE_DEBUG("%d: current: %u, new %u, control %.2f", i, _current_values[i], new_value,
-					     (double)_actuator_controls.control[i]);
+					     (double)_actuator_outputs.control[i]);
 
 				if (new_value != _current_values[i] &&
 				    isfinite(new_value) &&
